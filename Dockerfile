@@ -1,13 +1,15 @@
-FROM golang:1.18-alpine AS builder
-ENV PORT
+FROM golang:1.18 AS builder
+
+ARG PORT
+ARG DROPS_PRESCRIPTION
 
 ADD . /pingpong
 WORKDIR /pingpong
 
-RUN go build -o /app
+RUN go build -o /app ./cmd
 
 FROM debian:buster
-EXPOSE PORT
+EXPOSE $PORT
 
 WORKDIR /
 COPY --from=builder /app /

@@ -3,11 +3,12 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	uuid "github.com/satori/go.uuid"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
 )
 
 type Drop struct {
@@ -30,14 +31,17 @@ func (d dropper) Drop(drop Drop) {
 		pingJson, err := json.Marshal(ping)
 		if err != nil {
 			d.logger.Error("error on ping", zap.Error(err))
+			continue
 		}
 		resp, err := http.Post(drop.url, "application/json", bytes.NewBuffer(pingJson))
 		if err != nil {
 			d.logger.Error("got error from api", zap.Error(err))
+			continue
 		}
 		responseData, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			d.logger.Error("absent response body", zap.Error(err))
+			continue
 		}
 		var pong Ping
 		json.Unmarshal(responseData, &pong)
