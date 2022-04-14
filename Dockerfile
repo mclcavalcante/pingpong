@@ -1,6 +1,15 @@
 FROM golang:1.18-alpine AS builder
+ENV PORT
 
-WORKDIR /go/src/github.com/lpegoraro/pingpong-go-module
-COPY . .
+ADD . /pingpong
+WORKDIR /pingpong
 
-RUN go build
+RUN go build -o /app
+
+FROM debian:buster
+EXPOSE PORT
+
+WORKDIR /
+COPY --from=builder /app /
+
+ENTRYPOINT ["/app"]

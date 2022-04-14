@@ -1,0 +1,18 @@
+FROM golang:1.18-alpine AS builder
+ENV PORT
+
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+
+ADD . /pingpong
+WORKDIR /pingpong
+
+RUN go build -gcflags="all=-N -l" -o /app
+
+FROM debian:buster
+EXPOSE PORT
+
+WORKDIR /
+COPY --from=build-env /go/bin/dlv /
+COPY --from=builder /app /
+
+ENTRYPOINT ["/dlv", "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/app"]
