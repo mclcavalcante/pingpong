@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
@@ -20,7 +22,16 @@ type dropper struct {
 func (d dropper) Drop(drop Drop) {
 	ticker := time.NewTicker(drop.interval)
 	for _ = range ticker.C {
-		resp, err := http.Get(drop.url)
+		ping := Ping{
+			ID:        uuid.NewV4().String(),
+			Message:   "ping",
+			TimeStamp: time.Now().Format(time.RFC3339Nano),
+		}
+		pingJson, err := json.Marshal(ping)
+		if err != nil {
+			d.logger.Error("error on ping", zap.Error(err))
+		}
+		resp, err := http.Post(drop.url, "application/json", bytes.NewBuffer(pingJson))
 		if err != nil {
 			d.logger.Error("got error from api", zap.Error(err))
 		}
@@ -28,8 +39,8 @@ func (d dropper) Drop(drop Drop) {
 		if err != nil {
 			d.logger.Error("absent response body", zap.Error(err))
 		}
-		var ping Ping
-		json.Unmarshal(responseData, &ping)
-		d.logger.Info("got ping", zap.String("ping_uuid", ping.ID), zap.String("message", ping.Message))
+		var pong Ping
+		json.Unmarshal(responseData, &pong)
+		d.logger.Info("got ping", zap.String("ping_uuid", pong.ID), zap.String("message", pong.Message))
 	}
 }
